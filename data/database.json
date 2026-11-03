@@ -1,0 +1,226 @@
+{
+  "athletes": [
+    {
+      "athleteId": "A001",
+      "firstName": "Narun",
+      "lastName": "Serikov",
+      "displayName": "Serikov Narun",
+      "jerseyNumber": "2",
+      "accessToken": "tok_eyJpIjoiQTAwMSIsImQiOiJTZXJpa292IE5hcnVuIiwiaiI6IjIiLCJmIjoiTmFydW4iLCJsIjoiU2VyaWtvdiJ9",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A002",
+      "firstName": "Arnold",
+      "lastName": "Knaub",
+      "displayName": "Arnold Knaub",
+      "jerseyNumber": "3",
+      "accessToken": "tok_eyJpIjoiQTAwMiIsImQiOiJBcm5vbGQgS25hdWIiLCJqIjoiMyIsImYiOiJBcm5vbGQiLCJsIjoiS25hdWIifQ",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A003",
+      "firstName": "Sabit",
+      "lastName": "Uzakbaev",
+      "displayName": "Uzakbaev Sabit",
+      "jerseyNumber": "6",
+      "accessToken": "tok_eyJpIjoiQTAwMyIsImQiOiJVemFrYmFldiBTYWJpdCIsImoiOiI2IiwiZiI6IlNhYml0IiwibCI6IlV6YWtiYWV2In0",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A004",
+      "firstName": "Gaziz",
+      "lastName": "Nagashybay",
+      "displayName": "Nagashybay Gaziz",
+      "jerseyNumber": "8",
+      "accessToken": "tok_eyJpIjoiQTAwNCIsImQiOiJOYWdhc2h5YmF5IEdheml6IiwiaiI6IjgiLCJmIjoiR2F6aXoiLCJsIjoiTmFnYXNoeWJheSJ9",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A005",
+      "firstName": "Raymbek",
+      "lastName": "Zhuma",
+      "displayName": "Zhuma Raymbek",
+      "jerseyNumber": "10",
+      "accessToken": "tok_eyJpIjoiQTAwNSIsImQiOiJaaHVtYSBSYXltYmVrIiwiaiI6IjEwIiwiZiI6IlJheW1iZWsiLCJsIjoiWmh1bWEifQ",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A006",
+      "firstName": "Damir",
+      "lastName": "Qairbay",
+      "displayName": "Qairbay Damir",
+      "jerseyNumber": "11",
+      "accessToken": "tok_eyJpIjoiQTAwNiIsImQiOiJRYWlyYmF5IERhbWlyIiwiaiI6IjExIiwiZiI6IkRhbWlyIiwibCI6IlFhaXJiYXkifQ",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A007",
+      "firstName": "Allbergen",
+      "lastName": "Tanataruly",
+      "displayName": "Tanataruly Allbergen",
+      "jerseyNumber": "13",
+      "accessToken": "tok_eyJpIjoiQTAwNyIsImQiOiJUYW5hdGFydWx5IEFsbGJlcmdlbiIsImoiOiIxMyIsImYiOiJBbGxiZXJnZW4iLCJsIjoiVGFuYXRhcnVseSJ9",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A008",
+      "firstName": "Rasul",
+      "lastName": "Nurbai",
+      "displayName": "Nurbai Rasul",
+      "jerseyNumber": "14",
+      "accessToken": "tok_eyJpIjoiQTAwOCIsImQiOiJOdXJiYWkgUmFzdWwiLCJqIjoiMTQiLCJmIjoiUmFzdWwiLCJsIjoiTnVyYmFpIn0",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A009",
+      "firstName": "Adlet",
+      "lastName": "Bulatov",
+      "displayName": "Bulatov Adlet",
+      "jerseyNumber": "16",
+      "accessToken": "tok_eyJpIjoiQTAwOSIsImQiOiJCdWxhdG92IEFkbGV0IiwiaiI6IjE2IiwiZiI6IkFkbGV0IiwibCI6IkJ1bGF0b3YifQ",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A010",
+      "firstName": "Rakhat",
+      "lastName": "Tolegen",
+      "displayName": "Tolegen Rakhat",
+      "jerseyNumber": "17",
+      "accessToken": "tok_eyJpIjoiQTAxMCIsImQiOiJUb2xlZ2VuIFJha2hhdCIsImoiOiIxNyIsImYiOiJSYWtoYXQiLCJsIjoiVG9sZWdlbiJ9",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A011",
+      "firstName": "Adaybek",
+      "lastName": "Altynbek",
+      "displayName": "Altynbek Adaybek",
+      "jerseyNumber": "21",
+      "accessToken": "tok_eyJpIjoiQTAxMSIsImQiOiJBbHR5bmJlayBBZGF5YmVrIiwiaiI6IjIxIiwiZiI6IkFkYXliZWsiLCJsIjoiQWx0eW5iZWsifQ",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A012",
+      "firstName": "Ali",
+      "lastName": "Niknam",
+      "displayName": "Niknam Ali",
+      "jerseyNumber": "22",
+      "accessToken": "tok_eyJpIjoiQTAxMiIsImQiOiJOaWtuYW0gQWxpIiwiaiI6IjIyIiwiZiI6IkFsaSIsImwiOiJOaWtuYW0ifQ",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A013",
+      "firstName": "Erbol",
+      "lastName": "Sauyrbaev",
+      "displayName": "Sauyrbaev Erbol",
+      "jerseyNumber": "23",
+      "accessToken": "tok_eyJpIjoiQTAxMyIsImQiOiJTYXV5cmJhZXYgRXJib2wiLCJqIjoiMjMiLCJmIjoiRXJib2wiLCJsIjoiU2F1eXJiYWV2In0",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A014",
+      "firstName": "Maksat",
+      "lastName": "Orysbai",
+      "displayName": "Orysbai Maksat",
+      "jerseyNumber": "26",
+      "accessToken": "tok_eyJpIjoiQTAxNCIsImQiOiJPcnlzYmFpIE1ha3NhdCIsImoiOiIyNiIsImYiOiJNYWtzYXQiLCJsIjoiT3J5c2JhaSJ9",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A015",
+      "firstName": "Erzhan",
+      "lastName": "Karmenov",
+      "displayName": "Karmenov Erzhan",
+      "jerseyNumber": "77",
+      "accessToken": "tok_eyJpIjoiQTAxNSIsImQiOiJLYXJtZW5vdiBFcnpoYW4iLCJqIjoiNzciLCJmIjoiRXJ6aGFuIiwibCI6Ikthcm1lbm92In0",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    },
+    {
+      "athleteId": "A016",
+      "firstName": "Nursultan",
+      "lastName": "Tanatuly",
+      "displayName": "Tanatuly Nursultan",
+      "jerseyNumber": "79",
+      "accessToken": "tok_eyJpIjoiQTAxNiIsImQiOiJUYW5hdHVseSBOdXJzdWx0YW4iLCJqIjoiNzkiLCJmIjoiTnVyc3VsdGFuIiwibCI6IlRhbmF0dWx5In0",
+      "active": true,
+      "createdAt": "2026-09-01T08:00:00Z"
+    }
+  ],
+  "wellness": [
+    {
+      "athleteId": "A001",
+      "date": "2026-10-01",
+      "playerName": "Serikov Narun",
+      "jerseyNumber": "2",
+      "sleep": 4,
+      "fatigue": 4,
+      "muscleSoreness": 4,
+      "mood": 5,
+      "stress": 4,
+      "wellnessScore": 4.2,
+      "wellnessPercent": 84,
+      "painPresent": false,
+      "painIntensity": 0,
+      "painLocation": "—",
+      "illnessSymptoms": false,
+      "illnessDetails": "Нет",
+      "status": "GREEN",
+      "statusText": "В норме",
+      "recordId": "DW_A001_2026-10-01",
+      "createdAt": "2026-10-01T04:24:16.582Z",
+      "updatedAt": "2026-10-01T04:24:16.582Z"
+    },
+    {
+      "athleteId": "A001",
+      "playerName": "Serikov Narun",
+      "jerseyNumber": "2",
+      "date": "2026-11-03",
+      "sleep": 4,
+      "fatigue": 4,
+      "muscleSoreness": 4,
+      "mood": 5,
+      "stress": 4,
+      "wellnessScore": 4.2,
+      "wellnessPercent": 84,
+      "painPresent": false,
+      "painIntensity": 0,
+      "painLocation": "—",
+      "illnessSymptoms": false,
+      "illnessDetails": "",
+      "status": "GREEN",
+      "statusText": "В норме",
+      "recordId": "DW_A001_2026-11-03",
+      "createdAt": "2026-11-03T19:07:47.301Z",
+      "updatedAt": "2026-11-03T19:07:47.301Z"
+    }
+  ],
+  "settings": {
+    "teamName": "МФК КАСПИЙ (CASPIY FUTSAL CLUB)",
+    "teamLogo": "",
+    "timezone": "Asia/Aqtau",
+    "wellnessThresholdGreen": 80,
+    "wellnessThresholdYellow": 70,
+    "wellnessThresholdOrange": 60,
+    "painWarningThreshold": 4,
+    "painSevereThreshold": 7,
+    "adminPasswordHash": "caspiy2026",
+    "appsScriptUrl": ""
+  },
+  "rehab": [],
+  "trainingLoad": []
+}

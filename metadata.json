@@ -1,0 +1,6 @@
+{
+  "name": "Caspiy Futsal Wellness & Recovery Monitor",
+  "description": "Мобильная система ежедневного мониторинга самочувствия, wellness и восстановления футзального клуба Каспий с интеграцией Google Sheets и Apps Script.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
