@@ -222,6 +222,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           {/* Zone 3: Actions */}
           <div className="flex items-center gap-2">
+            {/* Google Sheets Live Status */}
+            {settings.appsScriptUrl ? (
+              <button
+                onClick={() => setCurrentTab('settings')}
+                title="Google Sheets прикреплен: данные игроков передаются автоматически в одну и ту же таблицу каждый день"
+                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/40 border border-emerald-700/60 text-emerald-300 text-xs font-medium transition-colors"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Sheets подключен</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setCurrentTab('settings')}
+                title="Нажмите чтобы прикрепить Google Таблицу"
+                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-950/40 hover:bg-amber-900/40 border border-amber-700/60 text-amber-300 text-xs font-medium transition-colors"
+              >
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span>Sheets: не прикреплен</span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 setIsManualRefreshing(true);

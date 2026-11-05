@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
   SETTINGS: 'caspiy_futsal_settings_v1',
   REHAB: 'caspiy_futsal_rehab_v1',
   TRAINING_LOAD: 'caspiy_futsal_load_v1',
+  PERMANENT_GAS_URL: 'caspiy_permanent_gas_url_v1',
 };
 
 // Seed team members: 16 Caspiy Futsal players
@@ -150,8 +151,28 @@ export class AppStorage {
       if (settingsRes && settingsRes.ok) {
         const data = await settingsRes.json();
         if (data.success && data.settings) {
-          const merged = { ...DEFAULT_SETTINGS, ...data.settings };
+          const currentLocal = this.getSettings();
+          const serverUrl = (data.settings.appsScriptUrl || '').trim();
+          const localUrl = (currentLocal.appsScriptUrl || '').trim();
+          const permanentUrl = (localStorage.getItem(STORAGE_KEYS.PERMANENT_GAS_URL) || '').trim();
+          const activeUrl = serverUrl || localUrl || permanentUrl;
+
+          const merged = { ...DEFAULT_SETTINGS, ...currentLocal, ...data.settings };
+          if (activeUrl) {
+            merged.appsScriptUrl = activeUrl;
+            localStorage.setItem(STORAGE_KEYS.PERMANENT_GAS_URL, activeUrl);
+          }
+
           localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(merged));
+
+          // Auto-heal server: if server was empty but local has URL, push it to server
+          if (!serverUrl && (localUrl || permanentUrl)) {
+            fetch('/api/settings', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...data.settings, appsScriptUrl: activeUrl }),
+            }).catch((e) => console.warn('Auto-healing server settings failed:', e));
+          }
         }
       }
 
@@ -569,6 +590,7 @@ export class AppStorage {
         body: JSON.stringify({
           ...targetRecord,
           token: athlete.accessToken,
+          appsScriptUrl: settings.appsScriptUrl,
         }),
       }).then(async (res) => {
         if (res.ok) {
@@ -615,15 +637,44 @@ export class AppStorage {
     this.init();
     try {
       const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-      return data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : DEFAULT_SETTINGS;
+      const parsed = data ? JSON.parse(data) : {};
+
+      const permanentGasUrl = (localStorage.getItem(STORAGE_KEYS.PERMANENT_GAS_URL) || '').trim();
+      const envGasUrl = ((import.meta as any).env?.VITE_GOOGLE_APPS_SCRIPT_URL || '').trim();
+
+      const effectiveGasUrl = (parsed.appsScriptUrl || '').trim() ||
+                              permanentGasUrl ||
+                              envGasUrl;
+
+      const merged: ReportSettings = { ...DEFAULT_SETTINGS, ...parsed };
+      if (effectiveGasUrl) {
+        merged.appsScriptUrl = effectiveGasUrl;
+      }
+      return merged;
     } catch {
       return DEFAULT_SETTINGS;
     }
   }
 
-  static updateSettings(newSettings: Partial<ReportSettings>) {
+  static updateSettings(newSettings: Partial<ReportSettings> & { forceClearAppsScriptUrl?: boolean }) {
     const current = this.getSettings();
     const updated = { ...current, ...newSettings };
+
+    const incomingUrl = newSettings.appsScriptUrl !== undefined ? newSettings.appsScriptUrl.trim() : undefined;
+    if (incomingUrl && incomingUrl !== '') {
+      updated.appsScriptUrl = incomingUrl;
+      localStorage.setItem(STORAGE_KEYS.PERMANENT_GAS_URL, incomingUrl);
+    } else if (newSettings.forceClearAppsScriptUrl) {
+      updated.appsScriptUrl = '';
+      localStorage.removeItem(STORAGE_KEYS.PERMANENT_GAS_URL);
+    } else if (incomingUrl === '') {
+      // Retain existing permanent URL if empty is provided without forceClear
+      const permanent = (localStorage.getItem(STORAGE_KEYS.PERMANENT_GAS_URL) || '').trim();
+      if (permanent) {
+        updated.appsScriptUrl = permanent;
+      }
+    }
+
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
 
     // Save to server so all devices and player phones immediately get updated settings
@@ -632,6 +683,10 @@ export class AppStorage {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updated),
     }).catch((e) => console.warn('Failed to save settings to server:', e));
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('caspiy_settings_updated', { detail: updated }));
+    }
   }
 
   static async testGoogleAppsScript(url?: string): Promise<{ success: boolean; reachable?: boolean; httpStatus?: number; details?: any; error?: string }> {

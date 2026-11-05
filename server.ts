@@ -52,6 +52,8 @@ interface DatabaseSchema {
   trainingLoad: any[];
 }
 
+const ENV_GAS_URL = (process.env.GOOGLE_APPS_SCRIPT_URL || process.env.VITE_GOOGLE_APPS_SCRIPT_URL || '').trim();
+
 function getDatabase(): DatabaseSchema {
   try {
     if (!fs.existsSync(DATA_DIR)) {
@@ -60,10 +62,14 @@ function getDatabase(): DatabaseSchema {
     if (fs.existsSync(DB_FILE)) {
       const content = fs.readFileSync(DB_FILE, 'utf-8');
       const parsed = JSON.parse(content);
+      const settings = parsed.settings ? { ...DEFAULT_SETTINGS, ...parsed.settings } : { ...DEFAULT_SETTINGS };
+      if (!settings.appsScriptUrl && ENV_GAS_URL) {
+        settings.appsScriptUrl = ENV_GAS_URL;
+      }
       return {
         athletes: Array.isArray(parsed.athletes) && parsed.athletes.length > 0 ? parsed.athletes : DEFAULT_ATHLETES,
         wellness: Array.isArray(parsed.wellness) ? parsed.wellness : [],
-        settings: parsed.settings ? { ...DEFAULT_SETTINGS, ...parsed.settings } : DEFAULT_SETTINGS,
+        settings,
         rehab: Array.isArray(parsed.rehab) ? parsed.rehab : [],
         trainingLoad: Array.isArray(parsed.trainingLoad) ? parsed.trainingLoad : [],
       };
@@ -75,7 +81,7 @@ function getDatabase(): DatabaseSchema {
   const initialDb: DatabaseSchema = {
     athletes: DEFAULT_ATHLETES,
     wellness: [],
-    settings: DEFAULT_SETTINGS,
+    settings: { ...DEFAULT_SETTINGS, appsScriptUrl: ENV_GAS_URL },
     rehab: [],
     trainingLoad: [],
   };
@@ -158,7 +164,21 @@ async function startServer() {
 
   app.post('/api/settings', (req: Request, res: Response) => {
     const db = getDatabase();
-    db.settings = { ...db.settings, ...req.body };
+    const incoming = req.body || {};
+    const updated = { ...db.settings, ...incoming };
+
+    // Prevent accidental erasing of appsScriptUrl:
+    const incomingUrl = incoming.appsScriptUrl !== undefined ? String(incoming.appsScriptUrl).trim() : undefined;
+    if (incomingUrl && incomingUrl !== '') {
+      updated.appsScriptUrl = incomingUrl;
+    } else if (incoming.forceClearAppsScriptUrl) {
+      updated.appsScriptUrl = '';
+    } else if (db.settings.appsScriptUrl) {
+      // Retain existing URL if incoming is empty/missing and not force cleared
+      updated.appsScriptUrl = db.settings.appsScriptUrl;
+    }
+
+    db.settings = updated;
     saveDatabase(db);
     res.json({ success: true, settings: db.settings });
   });
@@ -306,10 +326,17 @@ async function startServer() {
     // Find athlete token and metadata for Google Apps Script forward
     const athlete = db.athletes.find((a) => a.athleteId === record.athleteId);
 
-    // Forward to Google Apps Script Web App if configured
+    // Forward to Google Apps Script Web App (using server URL or client-provided fallback)
     let gasSyncResult: any = null;
-    if (db.settings.appsScriptUrl && db.settings.appsScriptUrl.trim() !== '') {
-      gasSyncResult = await forwardToGoogleAppsScript(db.settings.appsScriptUrl, {
+    const targetGasUrl = (db.settings.appsScriptUrl || record.appsScriptUrl || '').trim();
+    if (targetGasUrl && targetGasUrl.startsWith('http')) {
+      // Auto-heal: If server didn't have appsScriptUrl saved yet, store it permanently
+      if (!db.settings.appsScriptUrl) {
+        db.settings.appsScriptUrl = targetGasUrl;
+        saveDatabase(db);
+      }
+
+      gasSyncResult = await forwardToGoogleAppsScript(targetGasUrl, {
         action: 'saveWellness',
         token: athlete?.accessToken || record.token || '',
         athleteId: record.athleteId,
@@ -367,6 +394,61 @@ async function startServer() {
         error: err?.message || String(err),
       });
     }
+  });
+
+  // Send a real test check-in row to verify Google Sheets integration
+  app.post('/api/gas/test-checkin', async (req: Request, res: Response) => {
+    const db = getDatabase();
+    const url = (req.body.url || db.settings.appsScriptUrl || '').trim();
+    if (!url || !url.startsWith('http')) {
+      res.status(400).json({ success: false, error: 'Google Apps Script URL не настроен' });
+      return;
+    }
+
+    // Auto-heal: If server didn't have appsScriptUrl saved yet, store it permanently
+    if (!db.settings.appsScriptUrl) {
+      db.settings.appsScriptUrl = url;
+      saveDatabase(db);
+    }
+
+    const firstAthlete = db.athletes[0] || DEFAULT_ATHLETES[0];
+    const todayStr = new Date().toISOString().split('T')[0];
+    const testRecord = {
+      recordId: `TEST_${firstAthlete.athleteId}_${todayStr}`,
+      date: todayStr,
+      timestamp: new Date().toISOString(),
+      athleteId: firstAthlete.athleteId,
+      playerName: firstAthlete.displayName,
+      jerseyNumber: firstAthlete.jerseyNumber,
+      sleep: 4,
+      fatigue: 4,
+      muscleSoreness: 4,
+      mood: 5,
+      stress: 4,
+      wellnessScore: 4.2,
+      wellnessPercent: 84,
+      painPresent: false,
+      painIntensity: 0,
+      painLocation: '—',
+      illnessSymptoms: false,
+      illnessDetails: 'Нет (Тестовая проверка связи)',
+      status: 'GREEN',
+    };
+
+    const forwardRes = await forwardToGoogleAppsScript(url, {
+      action: 'saveWellness',
+      token: firstAthlete.accessToken,
+      athleteId: firstAthlete.athleteId,
+      playerName: firstAthlete.displayName,
+      jerseyNumber: firstAthlete.jerseyNumber,
+      data: testRecord,
+    });
+
+    res.json({
+      success: forwardRes.success,
+      details: forwardRes,
+      athlete: firstAthlete.displayName,
+    });
   });
 
   // Bulk sync all data from server database to Google Sheets

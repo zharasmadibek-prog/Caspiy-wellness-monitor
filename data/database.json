@@ -219,7 +219,8 @@
     "painWarningThreshold": 4,
     "painSevereThreshold": 7,
     "adminPasswordHash": "caspiy2026",
-    "appsScriptUrl": ""
+    "appsScriptUrl": "",
+    "forceClearAppsScriptUrl": true
   },
   "rehab": [],
   "trainingLoad": []

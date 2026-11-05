@@ -51,7 +51,9 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ token, onNavigateToAdmin
   }, []);
 
   useEffect(() => {
-    loadPlayerData();
+    // Pull fresh settings (including Google Sheets URL) and player records from server
+    AppStorage.syncFromServer().then(() => loadPlayerData()).catch(() => loadPlayerData());
+
     const handleSync = () => loadPlayerData();
     window.addEventListener('caspiy_athlete_updated', handleSync);
     window.addEventListener('storage', handleSync);

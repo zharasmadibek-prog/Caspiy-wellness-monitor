@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ReportSettings } from '../types';
 import { AppStorage } from '../services/storage';
-import { Save, RotateCcw, Shield, Link2, Sliders, Check, RefreshCw, Send, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Save, RotateCcw, Shield, Link2, Sliders, Check, RefreshCw, Send, AlertCircle, CheckCircle2, Zap, Unlink, Lock } from 'lucide-react';
 
 interface SettingsModalProps {
   settings: ReportSettings;
@@ -15,15 +15,91 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [formData, setFormData] = useState<ReportSettings>({ ...settings });
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [resetConfirm, setResetConfirm] = useState(false);
+  const [unlinkConfirm, setUnlinkConfirm] = useState(false);
 
   const [testingConnection, setTestingConnection] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const [sendingTestCheckin, setSendingTestCheckin] = useState(false);
+  const [testCheckinResult, setTestCheckinResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const [syncingAll, setSyncingAll] = useState(false);
   const [syncAllResult, setSyncAllResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const [syncingAthletes, setSyncingAthletes] = useState(false);
   const [syncAthletesMsg, setSyncAthletesMsg] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Keep form in sync with settings, but never wipe out a user-typed URL
+  useEffect(() => {
+    setFormData((prev) => {
+      const activeUrl = (settings.appsScriptUrl || '').trim() || (prev.appsScriptUrl || '').trim();
+      return {
+        ...settings,
+        appsScriptUrl: activeUrl,
+      };
+    });
+  }, [settings]);
+
+  const handleUrlBlur = () => {
+    const url = formData.appsScriptUrl?.trim();
+    if (url) {
+      AppStorage.updateSettings({ ...formData, appsScriptUrl: url });
+      onUpdateSettings({ ...formData, appsScriptUrl: url });
+    }
+  };
+
+  const handleSendTestWellnessCheckin = async () => {
+    const url = formData.appsScriptUrl?.trim();
+    if (!url) {
+      setTestCheckinResult({ success: false, message: 'Сначала укажите URL скрипта' });
+      return;
+    }
+    setSendingTestCheckin(true);
+    setTestCheckinResult(null);
+
+    // Save and lock URL first
+    AppStorage.updateSettings(formData);
+    onUpdateSettings(formData);
+
+    try {
+      const res = await fetch('/api/gas/test-checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTestCheckinResult({
+          success: true,
+          message: `Тестовая запись игрока ${data.athlete || ''} за сегодня успешно передана! Откройте лист DAILY_WELLNESS в вашей Google Таблице — там появилась новая строка за сегодня.`,
+        });
+      } else {
+        setTestCheckinResult({
+          success: false,
+          message: (data.details && data.details.error) || data.error || 'Не удалось отправить запись в Google Таблицу. Проверьте: в Apps Script доступ должен быть «Все (Anyone)».',
+        });
+      }
+    } catch (err: any) {
+      setTestCheckinResult({
+        success: false,
+        message: 'Ошибка при отправке: ' + (err?.message || String(err)),
+      });
+    } finally {
+      setSendingTestCheckin(false);
+    }
+  };
+
+  const handleUnlink = () => {
+    const cleared = { ...formData, appsScriptUrl: '' };
+    setFormData(cleared);
+    AppStorage.updateSettings({ ...cleared, forceClearAppsScriptUrl: true });
+    onUpdateSettings(cleared);
+    setUnlinkConfirm(false);
+    setTestResult(null);
+    setTestCheckinResult(null);
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 2500);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,8 +255,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <span>Интеграция с вашей Google Таблицей (Google Apps Script)</span>
             </div>
             {formData.appsScriptUrl ? (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-950/80 border border-emerald-700/50 text-emerald-400">
-                URL указан
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-950/80 border border-emerald-700/50 text-emerald-400 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Постоянно прикреплено</span>
               </span>
             ) : (
               <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 border border-slate-700 text-slate-400">
@@ -191,8 +268,50 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           <p className="text-xs text-slate-400 leading-relaxed">
             Вставьте URL развернутого Web App из вашего скрипта Apps Script (например, <code className="text-blue-400 font-mono">https://script.google.com/macros/s/AKfycb.../exec</code>).
-            Благодаря серверному прокси, каждый новый check-in с любого телефона игрока автоматически и мгновенно поступает прямо в вашу Google Таблицу и на этот сайт!
+            Ссылка надежно сохраняется в базе данных сервера и постоянном хранилище браузера — она <strong>не открепляется</strong> после перезахода, смены дня или перезагрузки. Каждый утренний check-in игрока мгновенно передается в эту же таблицу.
           </p>
+
+          {formData.appsScriptUrl && (
+            <div className="p-3 rounded-2xl bg-emerald-950/30 border border-emerald-800/60 flex items-center justify-between text-xs text-emerald-300">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>
+                  <strong>Постоянная привязка активна</strong>: таблица закреплена. Данные игроков каждый день автоматически направляются в эту таблицу.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUnlinkConfirm(true)}
+                className="text-[11px] text-slate-400 hover:text-rose-400 underline font-medium shrink-0 ml-3 transition-colors"
+              >
+                Отвязать
+              </button>
+            </div>
+          )}
+
+          {unlinkConfirm && (
+            <div className="p-3.5 rounded-2xl bg-rose-950/40 border border-rose-800 text-xs space-y-2">
+              <p className="text-rose-200 font-medium">
+                Вы действительно хотите отвязать Google Таблицу? Данные игроков перестанут отправляться в таблицу.
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleUnlink}
+                  className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition-colors"
+                >
+                  Да, отвязать
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUnlinkConfirm(false)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition-colors"
+                >
+                  Отмена
+                </button>
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">
@@ -203,12 +322,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               placeholder="https://script.google.com/macros/s/.../exec"
               value={formData.appsScriptUrl || ''}
               onChange={(e) => setFormData({ ...formData, appsScriptUrl: e.target.value })}
+              onBlur={handleUrlBlur}
               className="w-full px-4 py-2.5 text-xs rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-blue-500 font-mono"
             />
           </div>
 
-          {/* Action buttons: Test connection & Sync All */}
-          <div className="flex flex-wrap items-center gap-3 pt-1">
+          {/* Action buttons: Test connection, Test Check-in & Sync All */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-1">
             <button
               type="button"
               disabled={testingConnection || !formData.appsScriptUrl}
@@ -216,7 +336,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               className="px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${testingConnection ? 'animate-spin' : ''}`} />
-              <span>{testingConnection ? 'Проверка соединения...' : 'Проверить подключение'}</span>
+              <span>{testingConnection ? 'Проверка...' : 'Проверить связь (Ping)'}</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={sendingTestCheckin || !formData.appsScriptUrl}
+              onClick={handleSendTestWellnessCheckin}
+              title="Отправляет реальную тестовую запись на сегодняшний день в лист DAILY_WELLNESS"
+              className="px-3.5 py-2 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/40 text-amber-300 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Zap className={`w-3.5 h-3.5 ${sendingTestCheckin ? 'animate-pulse' : 'text-amber-400'}`} />
+              <span>{sendingTestCheckin ? 'Отправка...' : 'Отправить тестовую запись за сегодня'}</span>
             </button>
 
             <button
@@ -226,7 +357,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               className="px-3.5 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncingAthletes ? 'animate-spin' : ''}`} />
-              <span>{syncingAthletes ? 'Синхронизация...' : 'Синхронизировать состав (имена игроков)'}</span>
+              <span>{syncingAthletes ? 'Синхронизация...' : 'Синхронизировать состав (ATHLETES)'}</span>
             </button>
 
             <button
@@ -236,9 +367,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               className="px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className={`w-3.5 h-3.5 ${syncingAll ? 'animate-spin' : ''}`} />
-              <span>{syncingAll ? 'Отправка данных...' : 'Экспорт / Синхронизация всех данных в Таблицу'}</span>
+              <span>{syncingAll ? 'Отправка данных...' : 'Экспорт всех данных'}</span>
             </button>
           </div>
+
+          {/* Test check-in result message */}
+          {testCheckinResult && (
+            <div
+              className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 animate-fadeIn ${
+                testCheckinResult.success
+                  ? 'bg-amber-950/50 border-amber-600 text-amber-200'
+                  : 'bg-rose-950/50 border-rose-700 text-rose-200'
+              }`}
+            >
+              {testCheckinResult.success ? (
+                <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              )}
+              <div className="leading-relaxed">{testCheckinResult.message}</div>
+            </div>
+          )}
 
           {/* Sync athletes result message */}
           {syncAthletesMsg && (
